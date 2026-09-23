@@ -24,6 +24,7 @@
 #include "BKE_screen.hh"
 
 #include "WM_api.hh"
+#include "WM_keymap.hh"
 #include "WM_types.hh"
 
 #include "UI_interface_layout.hh"
@@ -163,7 +164,12 @@ static bool hud_panel_operator_redo_poll(const bContext *C, PanelType * /*pt*/)
 static void hud_panel_operator_redo_draw_header(const bContext *C, Panel *panel)
 {
   wmOperator *op = WM_operator_last_redo(C);
-  const std::string opname = WM_operatortype_name(op->type, op->ptr);
+  std::string opname = WM_operatortype_name(op->type, op->ptr);
+  if (const std::optional<std::string> shortcut = WM_key_event_operator_string(
+          C, "SCREEN_OT_redo_last", wm::OpCallContext::InvokeDefault, nullptr, false))
+  {
+    opname += " (" + *shortcut + ")";
+  }
   panel_drawname_set(panel, opname);
 }
 

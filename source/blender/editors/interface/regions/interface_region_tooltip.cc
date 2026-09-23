@@ -607,8 +607,7 @@ static std::unique_ptr<TooltipData> tooltip_data_from_tool(bContext *C,
   }
 
   /* Shortcut. */
-  const bool show_shortcut = is_quick_tip == false &&
-                             ((but->block->flag & BLOCK_SHOW_SHORTCUT_ALWAYS) == 0);
+  const bool show_shortcut = (but->block->flag & BLOCK_SHOW_SHORTCUT_ALWAYS) == 0;
 
   if (show_shortcut) {
     /* There are different kinds of shortcuts:
@@ -1025,9 +1024,9 @@ static std::unique_ptr<TooltipData> tooltip_data_from_button_or_extra_icon(
     else {
       but_label = button_extra_icon_string_get_label(*extra_icon);
       but_tip = button_extra_icon_string_get_tooltip(*C, *extra_icon);
-      if (!is_menu) {
-        op_keymap = button_extra_icon_string_get_operator_keymap(*C, *extra_icon);
-      }
+    }
+    if (!is_menu) {
+      op_keymap = button_extra_icon_string_get_operator_keymap(*C, *extra_icon);
     }
   }
   else {
@@ -1044,12 +1043,12 @@ static std::unique_ptr<TooltipData> tooltip_data_from_button_or_extra_icon(
       enum_label = enum_item ? enum_item->name : "";
       const char *description_c = enum_item ? enum_item->description : nullptr;
       enum_tip = description_c ? description_c : "";
-      if (!is_menu) {
-        op_keymap = button_string_get_operator_keymap(*C, *but);
-        prop_keymap = button_string_get_property_keymap(*C, *but);
-      }
       rna_struct = button_string_get_rna_struct_identifier(*but);
       rna_prop = button_string_get_rna_property_identifier(*but);
+    }
+    if (!is_menu) {
+      op_keymap = button_string_get_operator_keymap(*C, *but);
+      prop_keymap = button_string_get_property_keymap(*C, *but);
     }
   }
 
@@ -1106,13 +1105,8 @@ static std::unique_ptr<TooltipData> tooltip_data_from_button_or_extra_icon(
     tooltip_text_field_add(*data, std::move(enum_label), {}, TIP_STYLE_HEADER, TIP_LC_NORMAL);
   }
 
-  /* Don't include further details if this is just a quick label tooltip. */
-  if (is_quick_tip) {
-    return data->fields.is_empty() ? nullptr : std::move(data);
-  }
-
   /* Enum field label & tip. */
-  if (!enum_tip.empty()) {
+  if (!is_quick_tip && !enum_tip.empty()) {
     tooltip_text_field_add(*data, std::move(enum_tip), {}, TIP_STYLE_NORMAL, TIP_LC_VALUE);
   }
 
@@ -1134,6 +1128,10 @@ static std::unique_ptr<TooltipData> tooltip_data_from_button_or_extra_icon(
                            TIP_STYLE_NORMAL,
                            TIP_LC_VALUE,
                            true);
+  }
+
+  if (is_quick_tip) {
+    return data->fields.is_empty() ? nullptr : std::move(data);
   }
 
   if (ELEM(but->type, ButtonType::TextBox, ButtonType::Text, ButtonType::SearchMenu)) {
