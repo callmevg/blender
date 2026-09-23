@@ -33,7 +33,18 @@ class TOPBAR_HT_upper_bar(Header):
         layout.separator(type='LINE')
 
         if not screen.show_fullscreen:
-            layout.template_ID_tabs(window, "workspace", new="workspace.add", menu="TOPBAR_MT_workspace_menu")
+            is_beginner = context.preferences.app_template == "Beginner"
+            if is_beginner:
+                row = layout.row(align=True)
+                row.label(text=window.workspace.name, icon='WORKSPACE')
+                row.prop(
+                    context.window_manager,
+                    "beginner_show_advanced",
+                    text="Advanced",
+                    toggle=True,
+                )
+            if not is_beginner or context.window_manager.beginner_show_advanced:
+                layout.template_ID_tabs(window, "workspace", new="workspace.add", menu="TOPBAR_MT_workspace_menu")
         else:
             layout.operator("screen.back_to_previous", icon='SCREEN_BACK', text="Back to Previous")
 
@@ -119,7 +130,10 @@ class TOPBAR_MT_editor_menus(Menu):
         layout.menu("TOPBAR_MT_file")
         layout.menu("TOPBAR_MT_edit")
 
-        layout.menu("TOPBAR_MT_render")
+        is_beginner = context.preferences.app_template == "Beginner"
+        show_advanced = getattr(context.window_manager, "beginner_show_advanced", False)
+        if not is_beginner or show_advanced:
+            layout.menu("TOPBAR_MT_render")
 
         if bpy.data.project:
             layout.menu("TOPBAR_MT_project")
